@@ -6,7 +6,7 @@
 	"description": "",
 	"main": "./dist/index.js",
 	"bin": {
-		"zyro-run": "./dist/bin.js"
+		"ztsc": "./dist/bin.js"
 	},
 	"exports": {
 		".": {
