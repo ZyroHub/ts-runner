@@ -8,10 +8,12 @@ import { resolvePathAlias } from './paths.js';
 export async function resolve(specifier: string, context: any, nextResolve: any) {
 	const aliasPath = resolvePathAlias(specifier);
 	if (aliasPath) {
+		const isJson = aliasPath.endsWith('.json');
+
 		return {
 			url: pathToFileURL(aliasPath).href,
 			shortCircuit: true,
-			format: 'module'
+			format: isJson ? 'json' : 'module'
 		};
 	}
 
@@ -50,7 +52,7 @@ export async function resolve(specifier: string, context: any, nextResolve: any)
 			}
 		}
 
-		if (!targetPath.endsWith('.ts') && !targetPath.endsWith('.js')) {
+		if (!targetPath.endsWith('.ts') && !targetPath.endsWith('.js') && !targetPath.endsWith('.json')) {
 			try {
 				await fs.stat(targetPath + '.ts');
 				return {
@@ -95,6 +97,9 @@ export async function load(url: string, context: any, nextLoad: any) {
 				transform: {
 					legacyDecorator: true,
 					decoratorMetadata: true
+				},
+				experimental: {
+					keepImportAttributes: true
 				}
 			},
 			module: {
