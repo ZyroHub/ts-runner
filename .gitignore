@@ -1,0 +1,10 @@
+node_modules
+dist
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Misc
+.npmrc
