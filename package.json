@@ -1,40 +1,42 @@
 {
-    "name": "ts-runner",
-    "version": "1.0.0",
-    "author": "DMVMarcio",
-    "type": "module",
-    "main": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "exports": {
-        ".": {
-            "import": "./dist/index.js",
-            "types": "./dist/index.d.ts"
-        }
-    },
-    "scripts": {
-        "start": "node ./dist/index.js",
-        "dev": "node --watch --no-warnings --loader ts-node/esm src/index.ts",
-        "build": "rimraf dist && tsc && tsc-alias"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/ZyroHub/ts-runner.git"
-    },
-    "publishConfig": {
-        "access": "public"
-    },
-    "files": [
-        "/dist"
-    ],
-    "keywords": [],
-    "license": "MIT",
-    "devDependencies": {
-        "@swc/core": "^1.15.8",
-        "@swc/helpers": "^0.5.18",
-        "@zyrohub/config-prettier": "^1.0.6",
-        "rimraf": "^6.1.2",
-        "ts-node": "^10.9.2",
-        "tsc-alias": "^1.8.16",
-        "typescript": "^5.9.3"
-    }
+	"name": "@zyrohub/ts-runner",
+	"version": "0.0.1",
+	"author": "DMVMarcio",
+	"type": "module",
+	"description": "",
+	"main": "./dist/index.js",
+	"bin": {
+		"zyro-run": "./dist/bin.js"
+	},
+	"exports": {
+		".": {
+			"import": "./dist/index.js"
+		}
+	},
+	"scripts": {
+		"build": "rimraf ./dist && tsc"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ZyroHub/ts-runner.git"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"/dist"
+	],
+	"keywords": [],
+	"license": "MIT",
+	"dependencies": {
+		"@swc/core": "^1.15.8",
+		"get-tsconfig": "^4.13.0"
+	},
+	"devDependencies": {
+		"@types/node": "^25.0.3",
+		"@zyrohub/config-prettier": "^1.0.6",
+		"rimraf": "^6.1.2",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.9.3"
+	}
 }
