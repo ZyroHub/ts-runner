@@ -12,7 +12,7 @@ const rawArgs = process.argv.slice(2);
 
 const nodeWatchFlags = new Set(['--watch', '--watch-preserve-output']);
 
-const nodeArgs = ['--loader', loaderUrl, '--no-warnings'];
+const nodeArgs = ['--loader', loaderUrl, '--import', loaderUrl, '--no-warnings'];
 const scriptArgs: string[] = [];
 
 for (let i = 0; i < rawArgs.length; i++) {
@@ -29,11 +29,6 @@ for (let i = 0; i < rawArgs.length; i++) {
 			nodeArgs.push(rawArgs[i + 1]);
 			i++;
 		}
-		continue;
-	}
-
-	if (arg.startsWith('--watch-path=')) {
-		nodeArgs.push(arg);
 		continue;
 	}
 

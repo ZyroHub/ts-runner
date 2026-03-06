@@ -8,48 +8,49 @@ import { resolvePathAlias } from './paths.js';
 export async function resolve(specifier: string, context: any, nextResolve: any) {
 	const aliasPath = resolvePathAlias(specifier);
 	if (aliasPath) {
-		const isJson = aliasPath.endsWith('.json');
 		return {
 			url: pathToFileURL(aliasPath).href,
 			shortCircuit: true,
-			format: isJson ? 'json' : 'module'
+			format: aliasPath.endsWith('.json') ? 'json' : 'module'
 		};
 	}
 
 	if (specifier.startsWith('.') || specifier.startsWith('/') || specifier.startsWith('file:')) {
-		let url = new URL(specifier, context.parentURL).href;
-		let targetPath = fileURLToPath(url);
+		const url = new URL(specifier, context.parentURL).href;
+		const targetPath = fileURLToPath(url);
 
-		if (specifier.endsWith('.js')) {
+		if (targetPath.endsWith('.js')) {
 			const tsPath = targetPath.replace(/\.js$/, '.ts');
 			try {
 				await fs.stat(tsPath);
-				return { url: pathToFileURL(tsPath).href, shortCircuit: true, format: 'module' };
+				return {
+					url: pathToFileURL(tsPath).href,
+					shortCircuit: true,
+					format: 'module'
+				};
 			} catch {
 				const tsxPath = targetPath.replace(/\.js$/, '.tsx');
 				try {
 					await fs.stat(tsxPath);
-					return { url: pathToFileURL(tsxPath).href, shortCircuit: true, format: 'module' };
+					return {
+						url: pathToFileURL(tsxPath).href,
+						shortCircuit: true,
+						format: 'module'
+					};
 				} catch {}
 			}
 		}
 
 		try {
-			const stat = await fs.stat(targetPath).catch(() => null);
-
-			if (!stat) {
-				for (const ext of ['.ts', '.tsx', '.js']) {
-					try {
-						await fs.stat(targetPath + ext);
-						return { url: pathToFileURL(targetPath + ext).href, shortCircuit: true, format: 'module' };
-					} catch {}
-				}
-			} else if (stat.isDirectory()) {
+			const stat = await fs.stat(targetPath);
+			if (stat.isDirectory()) {
 				const indexTs = path.join(targetPath, 'index.ts');
-				try {
-					await fs.stat(indexTs);
-					return { url: pathToFileURL(indexTs).href, shortCircuit: true, format: 'module' };
-				} catch {}
+				await fs.stat(indexTs);
+				return {
+					url: pathToFileURL(indexTs).href,
+					shortCircuit: true,
+					format: 'module'
+				};
 			}
 		} catch {}
 	}
@@ -74,9 +75,6 @@ export async function load(url: string, context: any, nextLoad: any) {
 				transform: {
 					legacyDecorator: true,
 					decoratorMetadata: true
-				},
-				experimental: {
-					keepImportAttributes: true
 				}
 			},
 			module: {
