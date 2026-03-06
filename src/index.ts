@@ -13,6 +13,15 @@ const Module = require('module');
 const originalResolveFilename = Module._resolveFilename;
 
 Module._resolveFilename = function (request: string, parent: any, isMain: boolean, options: any) {
+	const aliasPath = resolvePathAlias(request);
+	if (aliasPath) {
+		if (aliasPath.endsWith('.js') && !existsSync(aliasPath)) {
+			const tsPath = aliasPath.replace(/\.js$/, '.ts');
+			if (existsSync(tsPath)) return tsPath;
+		}
+		return aliasPath;
+	}
+
 	if (request.endsWith('.js') && (request.startsWith('.') || request.startsWith('/'))) {
 		const parentDir = parent?.filename ? path.dirname(parent.filename) : process.cwd();
 		const tsPath = path.resolve(parentDir, request.replace(/\.js$/, '.ts'));
@@ -22,6 +31,7 @@ Module._resolveFilename = function (request: string, parent: any, isMain: boolea
 		const tsxPath = tsPath + 'x';
 		if (existsSync(tsxPath)) return tsxPath;
 	}
+
 	return originalResolveFilename.apply(this, [request, parent, isMain, options]);
 };
 
