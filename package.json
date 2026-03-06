@@ -1,9 +1,9 @@
 {
 	"name": "@zyrohub/ts-runner",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"author": "DMVMarcio",
 	"type": "module",
-	"description": "",
+	"description": "A TypeScript runner that compiles and executes TypeScript using SWC.",
 	"main": "./dist/index.js",
 	"bin": {
 		"ztsc": "./dist/bin.js"
