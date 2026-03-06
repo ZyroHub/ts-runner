@@ -1,36 +1,35 @@
 import { transform } from '@swc/core';
-import { existsSync, readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import fs from 'fs/promises';
+import { createRequire } from 'module';
 import path from 'path';
 import { pathToFileURL, fileURLToPath } from 'url';
 
 import { resolvePathAlias } from './paths.js';
 
-// @ts-ignore
+const require = createRequire(import.meta.url);
+const Module = require('module');
+
 const originalResolveFilename = Module._resolveFilename;
 
-// @ts-ignore
-Module._resolveFilename = function (request, parent, isMain, options) {
+Module._resolveFilename = function (request: string, parent: any, isMain: boolean, options: any) {
 	if (request.endsWith('.js') && (request.startsWith('.') || request.startsWith('/'))) {
-		const tsPath = path.resolve(path.dirname(parent?.filename || ''), request.replace(/\.js$/, '.ts'));
+		const parentDir = parent?.filename ? path.dirname(parent.filename) : process.cwd();
+		const tsPath = path.resolve(parentDir, request.replace(/\.js$/, '.ts'));
+
 		if (existsSync(tsPath)) return tsPath;
 
 		const tsxPath = tsPath + 'x';
 		if (existsSync(tsxPath)) return tsxPath;
 	}
-	return originalResolveFilename.apply(this, arguments);
+	return originalResolveFilename.apply(this, [request, parent, isMain, options]);
 };
 
-// @ts-ignore
-Module._extensions['.ts'] = function (module, filename) {
+Module._extensions['.ts'] = function (module: any, filename: string) {
 	const source = readFileSync(filename, 'utf8');
-	const output = transformSync(source, filename);
-	module._compile(output, filename);
-};
+	const { transformSync } = require('@swc/core');
 
-function transformSync(source: string, filename: string) {
-	const { transformSync: swcTransform } = require('@swc/core');
-	return swcTransform(source, {
+	const output = transformSync(source, {
 		filename,
 		jsc: {
 			parser: { syntax: 'typescript', decorators: true, tsx: filename.endsWith('.tsx') },
@@ -38,8 +37,10 @@ function transformSync(source: string, filename: string) {
 			transform: { legacyDecorator: true, decoratorMetadata: true }
 		},
 		module: { type: 'commonjs' }
-	}).code;
-}
+	});
+
+	module._compile(output.code, filename);
+};
 
 export async function resolve(specifier: string, context: any, nextResolve: any) {
 	const aliasPath = resolvePathAlias(specifier);
