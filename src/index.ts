@@ -9,7 +9,6 @@ export async function resolve(specifier: string, context: any, nextResolve: any)
 	const aliasPath = resolvePathAlias(specifier);
 	if (aliasPath) {
 		const isJson = aliasPath.endsWith('.json');
-
 		return {
 			url: pathToFileURL(aliasPath).href,
 			shortCircuit: true,
@@ -18,63 +17,41 @@ export async function resolve(specifier: string, context: any, nextResolve: any)
 	}
 
 	if (specifier.startsWith('.') || specifier.startsWith('/') || specifier.startsWith('file:')) {
-		let targetPath = specifier.startsWith('file:') ? fileURLToPath(specifier) : specifier;
+		let url = new URL(specifier, context.parentURL).href;
+		let targetPath = fileURLToPath(url);
 
-		if (specifier.startsWith('.')) {
-			const parentPath = fileURLToPath(context.parentURL);
-			const parentDir = path.dirname(parentPath);
-			targetPath = path.resolve(parentDir, specifier);
-		}
-
-		if (targetPath.endsWith('.js')) {
+		if (specifier.endsWith('.js')) {
+			const tsPath = targetPath.replace(/\.js$/, '.ts');
 			try {
-				await fs.stat(targetPath);
+				await fs.stat(tsPath);
+				return { url: pathToFileURL(tsPath).href, shortCircuit: true, format: 'module' };
 			} catch {
-				const tsPath = targetPath.replace(/\.js$/, '.ts');
+				const tsxPath = targetPath.replace(/\.js$/, '.tsx');
 				try {
-					await fs.stat(tsPath);
-					return {
-						url: pathToFileURL(tsPath).href,
-						shortCircuit: true,
-						format: 'module'
-					};
-				} catch {
-					const tsxPath = targetPath.replace(/\.js$/, '.tsx');
-					try {
-						await fs.stat(tsxPath);
-						return {
-							url: pathToFileURL(tsxPath).href,
-							shortCircuit: true,
-							format: 'module'
-						};
-					} catch {}
-				}
-			}
-		}
-
-		if (!targetPath.endsWith('.ts') && !targetPath.endsWith('.js') && !targetPath.endsWith('.json')) {
-			try {
-				await fs.stat(targetPath + '.ts');
-				return {
-					url: pathToFileURL(targetPath + '.ts').href,
-					shortCircuit: true,
-					format: 'module'
-				};
-			} catch {
-				try {
-					const stat = await fs.stat(targetPath);
-					if (stat.isDirectory()) {
-						const indexTs = path.join(targetPath, 'index.ts');
-						await fs.stat(indexTs);
-						return {
-							url: pathToFileURL(indexTs).href,
-							shortCircuit: true,
-							format: 'module'
-						};
-					}
+					await fs.stat(tsxPath);
+					return { url: pathToFileURL(tsxPath).href, shortCircuit: true, format: 'module' };
 				} catch {}
 			}
 		}
+
+		try {
+			const stat = await fs.stat(targetPath).catch(() => null);
+
+			if (!stat) {
+				for (const ext of ['.ts', '.tsx', '.js']) {
+					try {
+						await fs.stat(targetPath + ext);
+						return { url: pathToFileURL(targetPath + ext).href, shortCircuit: true, format: 'module' };
+					} catch {}
+				}
+			} else if (stat.isDirectory()) {
+				const indexTs = path.join(targetPath, 'index.ts');
+				try {
+					await fs.stat(indexTs);
+					return { url: pathToFileURL(indexTs).href, shortCircuit: true, format: 'module' };
+				} catch {}
+			}
+		} catch {}
 	}
 
 	return nextResolve(specifier, context);
